@@ -12,7 +12,8 @@ const prisma = new PrismaClient();
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://fullstackcode-tau.vercel.app'
+    'https://fullstackcode-tau.vercel.app',
+    'https://fullstackcode-tau.vercel.app/'
   ]
 }));
 app.use(express.json());
