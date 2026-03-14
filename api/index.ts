@@ -46,9 +46,13 @@ app.get('/api/modules', async (_req: Request, res: Response) => {
     }));
 
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching modules:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      details: error.message,
+      code: error.code 
+    });
   }
 });
 
