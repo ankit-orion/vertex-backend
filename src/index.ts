@@ -9,7 +9,9 @@ const app = express();
 const port = process.env.PORT || 5000;
 const prisma = new PrismaClient();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://fullstackcode-tau.vercel.app'
+}));
 app.use(express.json());
 
 // ─── Health Check ───────────────────────────────────────────────────────────
