@@ -10,7 +10,10 @@ const port = process.env.PORT || 5000;
 const prisma = new PrismaClient();
 
 app.use(cors({
-  origin: 'https://fullstackcode-tau.vercel.app'
+  origin: [
+    'http://localhost:5173',
+    'https://fullstackcode-tau.vercel.app'
+  ]
 }));
 app.use(express.json());
 
