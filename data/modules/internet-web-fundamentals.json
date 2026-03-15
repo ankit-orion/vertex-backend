@@ -1,0 +1,253 @@
+{
+  "order": 1,
+  "title": "Internet & Web Fundamentals",
+  "description": "Learn about Internet & Web Fundamentals",
+  "topics": [
+    {
+      "title": "How the Internet Works",
+      "order": 1,
+      "content": "\r\nThe internet is a global network of computers that agree on how to talk to each other. That agreement is a set of **protocols** — rules for formatting, addressing, and routing data.\r\n\r\nWhen you type `https://github.com` into your browser, here's the actual sequence:\r\n\r\n1. Your browser needs to find the IP address for `github.com`\r\n2. Your OS checks its local DNS cache — if it's there, use it\r\n3. If not cached, your OS asks your configured DNS resolver (usually your router or ISP)\r\n4. The resolver walks up the DNS hierarchy until it gets an answer\r\n5. Your browser opens a TCP connection to that IP on port 443\r\n6. A TLS handshake happens — certificates are exchanged, encryption keys are negotiated\r\n7. Your browser sends an HTTP GET request over that encrypted connection\r\n8. The server processes it and sends back a response\r\n9. Your browser parses the HTML, discovers more resources (CSS, JS, images), and fetches those too\r\n10. The page renders\r\n\r\nEvery single step is a potential failure point. Understanding each one is how you debug real problems.\r\n\r\n"
+    },
+    {
+      "title": "# The TCP/IP Stack",
+      "order": 2,
+      "content": "\r\nNetworking is organized in layers. You don't need to memorize all of them, but you should understand what each does:\r\n\r\n| Layer | Protocol | What it does |\r\n|-------|----------|--------------|\r\n| Application | HTTP, DNS, SMTP | The actual content and commands |\r\n| Transport | TCP, UDP | Reliable (TCP) or fast (UDP) delivery |\r\n| Internet | IP | Addressing and routing between networks |\r\n| Link | Ethernet, Wi-Fi | Physical transmission on a local network |\r\n\r\n**TCP** (Transmission Control Protocol) guarantees delivery and ordering. It breaks data into packets, numbers them, and the receiver sends acknowledgements. Lost packets get retransmitted. This is what HTTP runs on.\r\n\r\n**UDP** (User Datagram Protocol) just fires packets and forgets them. Faster, but no guarantees. Used for DNS lookups, video streaming, gaming — things where a dropped packet is better than a delayed one.\r\n\r\n"
+    },
+    {
+      "title": "# Packets and Routing",
+      "order": 3,
+      "content": "\r\nData travels in **packets** — small chunks, typically around 1500 bytes. A single HTTP response might be split into hundreds of packets, each potentially taking a different path through the network, arriving out of order, and being reassembled by TCP at the destination.\r\n\r\nRouters forward packets toward their destination using routing tables. They don't know the full path — they just know which next hop gets the packet closer.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "HTTP vs HTTPS",
+      "order": 4,
+      "content": "\r\n**HTTP** (HyperText Transfer Protocol) is the language browsers and servers use to communicate. An HTTP request looks like this:\r\n\r\n```\r\nGET /api/users/42 HTTP/1.1\r\nHost: api.example.com\r\nAccept: application/json\r\nAuthorization: Bearer eyJhbGciOiJIUzI1NiJ9...\r\n```\r\n\r\nAnd a response:\r\n\r\n```\r\nHTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: max-age=3600\r\n\r\n{\"id\": 42, \"name\": \"Alice\", \"email\": \"alice@example.com\"}\r\n```\r\n\r\nHTTP is plain text. Anyone who can intercept the network traffic can read everything — credentials, session tokens, personal data. This is a serious problem on public Wi-Fi and shared networks.\r\n\r\n**HTTPS** is HTTP with TLS (Transport Layer Security) underneath it. The same request and response happen, but they're encrypted so interceptors only see gibberish.\r\n\r\n"
+    },
+    {
+      "title": "# The TLS Handshake",
+      "order": 5,
+      "content": "\r\nWhen your browser connects to an HTTPS site, before any HTTP happens:\r\n\r\n1. **Client Hello** — browser sends supported TLS versions and cipher suites\r\n2. **Server Hello** — server picks a cipher suite and sends its certificate\r\n3. **Certificate verification** — browser checks the cert was signed by a trusted Certificate Authority (CA), hasn't expired, and matches the domain\r\n4. **Key exchange** — they negotiate a shared secret using asymmetric cryptography (usually ECDHE)\r\n5. **Finished** — both sides confirm the handshake with a message encrypted using the new keys\r\n\r\nFrom here on, everything is encrypted with symmetric keys (AES is common) — fast enough for bulk data transfer.\r\n\r\n"
+    },
+    {
+      "title": "# HTTP Versions",
+      "order": 6,
+      "content": "\r\n- **HTTP/1.1** — one request per TCP connection at a time (browsers work around this by opening 6 connections per domain)\r\n- **HTTP/2** — multiplexing: multiple requests over a single connection, header compression, server push\r\n- **HTTP/3** — runs over QUIC (UDP-based), faster connection setup, better handling of packet loss\r\n\r\nMost production sites should be using HTTP/2 at minimum. Check yours with `curl -I --http2 https://yoursite.com`.\r\n\r\n"
+    },
+    {
+      "title": "# HTTP Status Codes You Need to Know",
+      "order": 7,
+      "content": "\r\n```\r\n2xx — Success\r\n  200 OK\r\n  201 Created\r\n  204 No Content\r\n\r\n3xx — Redirection\r\n  301 Moved Permanently   (update your bookmarks/links)\r\n  302 Found               (temporary redirect)\r\n  304 Not Modified        (use your cached version)\r\n\r\n4xx — Client Error (you did something wrong)\r\n  400 Bad Request         (malformed syntax)\r\n  401 Unauthorized        (not authenticated)\r\n  403 Forbidden           (authenticated but not allowed)\r\n  404 Not Found\r\n  409 Conflict            (e.g. duplicate resource)\r\n  422 Unprocessable Entity (validation failed)\r\n  429 Too Many Requests   (rate limited)\r\n\r\n5xx — Server Error (server did something wrong)\r\n  500 Internal Server Error\r\n  502 Bad Gateway         (upstream server failed)\r\n  503 Service Unavailable (overloaded or down)\r\n  504 Gateway Timeout     (upstream server too slow)\r\n```\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "DNS Resolution",
+      "order": 8,
+      "content": "\r\nThe Domain Name System is the internet's phone book. It translates human-readable names like `api.stripe.com` into IP addresses like `54.187.216.72`.\r\n\r\n"
+    },
+    {
+      "title": "# The Hierarchy",
+      "order": 9,
+      "content": "\r\nDNS is a distributed, hierarchical database:\r\n\r\n```\r\n                    . (root)\r\n                    |\r\n           .com  .org  .net  .io  ...\r\n                    |\r\n              example.com\r\n                    |\r\n         www   api   mail   ...\r\n```\r\n\r\n"
+    },
+    {
+      "title": "# How a Lookup Works",
+      "order": 10,
+      "content": "\r\nWhen your browser needs to resolve `api.example.com`:\r\n\r\n1. Check local cache (OS, browser, `/etc/hosts`)\r\n2. Ask the **Recursive Resolver** (your ISP or a public one like `8.8.8.8`)\r\n3. Resolver asks a **Root Nameserver** — \"who handles `.com`?\"\r\n4. Root says \"ask the `.com` TLD nameserver\"\r\n5. TLD nameserver says \"ask `ns1.example.com`\"\r\n6. `ns1.example.com` (the authoritative nameserver) returns the actual IP\r\n7. Resolver caches the result (for the TTL duration) and returns it\r\n\r\n"
+    },
+    {
+      "title": "# DNS Record Types",
+      "order": 11,
+      "content": "\r\n```\r\nA      maps domain → IPv4 address\r\nAAAA   maps domain → IPv6 address\r\nCNAME  maps domain → another domain (alias)\r\nMX     mail server for the domain\r\nTXT    arbitrary text (used for SPF, DKIM, site verification)\r\nNS     nameservers for the domain\r\nSOA    administrative info about the zone\r\n```\r\n\r\n```bash\r\n# Practical DNS debugging\r\ndig api.example.com A           # A record\r\ndig api.example.com +trace      # full resolution path\r\ndig @8.8.8.8 api.example.com    # use Google's resolver\r\nnslookup api.example.com        # Windows/cross-platform\r\n\r\n# Check what TTL is left on a record\r\ndig api.example.com | grep -i ttl\r\n```\r\n\r\n**TTL gotcha**: When you're migrating a site and change DNS records, the old IP will be cached everywhere for the duration of the TTL. Lower your TTL to 300 seconds (5 min) a day or two before the migration, then change the record, then raise it back. This is one of those things that bites everyone once.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "Domain Names & Hosting",
+      "order": 12,
+      "content": "\r\n"
+    },
+    {
+      "title": "# How Domains Work",
+      "order": 13,
+      "content": "\r\nYou don't buy a domain — you **rent** it from a registrar (Namecheap, Cloudflare, Google Domains, etc.). The registrar updates the TLD's registry with your nameserver information.\r\n\r\n```\r\nYou → Registrar → TLD Registry → DNS System → Visitors\r\n```\r\n\r\n"
+    },
+    {
+      "title": "# Hosting Models",
+      "order": 14,
+      "content": "\r\n**Shared Hosting**: Your site lives on a server with hundreds of others. Cheap, but one bad neighbor can affect your performance. Fine for personal projects or low-traffic sites.\r\n\r\n**VPS (Virtual Private Server)**: A virtual machine with dedicated resources. You get root access and full control. DigitalOcean, Linode, Vultr. Good middle ground for serious projects.\r\n\r\n**Dedicated Server**: A physical machine just for you. Expensive, but maximum performance and control. Usually only justified at scale.\r\n\r\n**Platform as a Service (PaaS)**: Heroku, Railway, Render. You push code, they handle servers. More expensive per compute unit, but saves operational overhead.\r\n\r\n**Serverless / Edge**: Vercel, Netlify, Cloudflare Workers. Functions run on demand, globally distributed. Zero operational overhead for many use cases. Cold start latency is the tradeoff.\r\n\r\n"
+    },
+    {
+      "title": "# Connecting a Domain to Hosting",
+      "order": 15,
+      "content": "\r\nTypically you either:\r\n\r\n1. **Point nameservers** to your hosting provider (they control all DNS from there)\r\n2. **Add an A record** pointing your domain to your server's IP\r\n\r\n```\r\n; Example DNS zone file\r\nexample.com.     300  IN  A     203.0.113.42\r\nwww.example.com. 300  IN  CNAME example.com.\r\napi.example.com. 300  IN  A     203.0.113.43\r\n```\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "Client vs Server Architecture",
+      "order": 16,
+      "content": "\r\n"
+    },
+    {
+      "title": "# The Basic Model",
+      "order": 17,
+      "content": "\r\n```\r\nClient (Browser)                    Server\r\n     |                                 |\r\n     |  HTTP Request                   |\r\n     |-------------------------------->|\r\n     |                                 | - reads DB\r\n     |                                 | - runs business logic\r\n     |  HTTP Response                  | - renders/returns data\r\n     |<--------------------------------|\r\n     |                                 |\r\n```\r\n\r\n**Client-side** code runs in the browser: JavaScript manipulating the DOM, handling user interactions, making API calls. The user can see and modify it.\r\n\r\n**Server-side** code runs on the server: database queries, authentication, business logic, sending emails. The user never sees it directly.\r\n\r\n"
+    },
+    {
+      "title": "# Rendering Strategies",
+      "order": 18,
+      "content": "\r\n**Server-Side Rendering (SSR)**: The server builds the full HTML and sends it. Fast initial page load, great for SEO. Traditional web (PHP, Rails, Django) and modern frameworks (Next.js, Nuxt).\r\n\r\n**Client-Side Rendering (CSR)**: Server sends a minimal HTML shell plus JavaScript. JS runs in the browser and renders the page. The initial load is slower (blank page until JS runs), but subsequent navigation is fast. Create React App, Vue CLI.\r\n\r\n**Static Site Generation (SSG)**: HTML is generated at build time, not request time. Incredibly fast, trivially cacheable. Great for marketing sites, documentation, blogs. Gatsby, Hugo, Next.js with `getStaticProps`.\r\n\r\n**Incremental Static Regeneration (ISR)**: Static pages are regenerated in the background after a set interval. Best of both worlds for sites with infrequently changing content. Next.js-specific.\r\n\r\nThe right choice depends on your content update frequency, SEO requirements, and traffic patterns. Most real applications use a mix.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "The Request–Response Lifecycle",
+      "order": 19,
+      "content": "\r\nLet's trace a real request through a modern web stack. User clicks \"Add to Cart\" on an e-commerce site:\r\n\r\n```\r\n1. Browser\r\n   - User clicks button\r\n   - JavaScript event handler fires\r\n   - fetch('/api/cart', { method: 'POST', body: JSON.stringify({ productId: 123 }) })\r\n\r\n2. Network\r\n   - DNS lookup (probably cached)\r\n   - TCP connection (probably reused via HTTP/2)\r\n   - TLS already established\r\n   - HTTP/2 stream opened\r\n\r\n3. Load Balancer (nginx, AWS ALB)\r\n   - Terminates TLS\r\n   - Routes to an available app server\r\n   - Adds X-Forwarded-For header with client IP\r\n\r\n4. App Server (Node.js, etc.)\r\n   - Framework router matches POST /api/cart\r\n   - Authentication middleware: validates JWT token\r\n   - Rate limiting middleware: checks request count\r\n   - Controller function runs:\r\n     a. Validates request body (productId is a number, product exists)\r\n     b. Queries database: SELECT * FROM products WHERE id = 123\r\n     c. Updates database: INSERT INTO cart_items ...\r\n     d. Returns JSON response\r\n\r\n5. Database\r\n   - Query executes\r\n   - Returns result set\r\n   - Connection returned to pool\r\n\r\n6. Response travels back\r\n   - App server sends HTTP 201 with JSON body\r\n   - Load balancer forwards it\r\n   - Browser receives it\r\n   - JavaScript parses JSON, updates UI\r\n```\r\n\r\nEvery one of these steps is something you'll debug at some point. Knowing the full picture means you know where to look.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "Web Browser Internals",
+      "order": 20,
+      "content": "\r\nModern browsers are extraordinarily complex. Here's what happens when they receive HTML:\r\n\r\n"
+    },
+    {
+      "title": "# The Critical Rendering Path",
+      "order": 21,
+      "content": "\r\n```\r\nHTML bytes → Tokens → DOM\r\nCSS bytes  → Tokens → CSSOM\r\n                         ↓\r\nDOM + CSSOM = Render Tree\r\n                         ↓\r\n                      Layout (calculate positions and sizes)\r\n                         ↓\r\n                      Paint (fill in pixels)\r\n                         ↓\r\n                      Composite (layers → screen)\r\n```\r\n\r\n**DOM** (Document Object Model): A tree representation of the HTML structure. JavaScript interacts with the page through this API.\r\n\r\n**CSSOM** (CSS Object Model): A tree of all CSS rules. Combined with the DOM to determine what each element looks like.\r\n\r\n**Render Tree**: Only the visible elements (no `display: none`, no `<head>`), each with their computed styles.\r\n\r\n**Layout** (also called Reflow): The browser calculates the exact position and size of every element. This is expensive. Triggering it repeatedly (layout thrashing) kills performance.\r\n\r\n**Paint**: Fills in pixels for each element — backgrounds, borders, text, shadows.\r\n\r\n**Composite**: The browser may split the page into layers (especially for animated or transformed elements) and composites them together on the GPU.\r\n\r\n"
+    },
+    {
+      "title": "# JavaScript Engine",
+      "order": 22,
+      "content": "\r\nBrowsers use a **Just-In-Time (JIT)** compiler. Your JavaScript isn't interpreted line by line — it's compiled to machine code at runtime. V8 (Chrome/Node.js) optimizes \"hot\" code paths especially aggressively.\r\n\r\nThe browser runs JavaScript on a **single thread** using an **event loop**. Long-running JS blocks the UI thread — the page freezes. This is why you use async operations and why Web Workers exist.\r\n\r\n"
+    },
+    {
+      "title": "# The Event Loop",
+      "order": 23,
+      "content": "\r\n```javascript\r\n// Mental model of the event loop:\r\n\r\nwhile (true) {\r\n  // 1. Run all synchronous code in the call stack\r\n  runCallStack();\r\n\r\n  // 2. Process all microtasks (Promise callbacks, queueMicrotask)\r\n  while (microtaskQueue.length > 0) {\r\n    runMicrotask(microtaskQueue.shift());\r\n  }\r\n\r\n  // 3. Render if needed (60fps = every ~16.6ms)\r\n  if (shouldRender()) render();\r\n\r\n  // 4. Run one macrotask (setTimeout, setInterval, I/O callback)\r\n  if (macrotaskQueue.length > 0) {\r\n    runMacrotask(macrotaskQueue.shift());\r\n  }\r\n}\r\n```\r\n\r\nThis explains some non-obvious behavior:\r\n\r\n```javascript\r\nconsole.log('1');\r\n\r\nsetTimeout(() => console.log('2'), 0); // macrotask queue\r\n\r\nPromise.resolve().then(() => console.log('3')); // microtask queue\r\n\r\nconsole.log('4');\r\n\r\n// Output: 1, 4, 3, 2\r\n// Synchronous runs first, then microtasks, then macrotasks\r\n```\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "Cookies vs localStorage vs sessionStorage",
+      "order": 24,
+      "content": "\r\nAll three let you store data in the browser, but they have very different characteristics.\r\n\r\n"
+    },
+    {
+      "title": "# Cookies",
+      "order": 25,
+      "content": "\r\n```javascript\r\n// Setting a cookie\r\ndocument.cookie = \"userId=abc123; Max-Age=86400; Path=/; Secure; HttpOnly; SameSite=Strict\";\r\n\r\n// Reading cookies (clunky API — use a library or helper)\r\nconst cookies = Object.fromEntries(\r\n  document.cookie.split('; ').map(c => c.split('='))\r\n);\r\n```\r\n\r\nKey characteristics:\r\n- **Sent to the server automatically** with every request. This is their primary purpose.\r\n- Size limit: ~4KB\r\n- Can be set by the server via `Set-Cookie` response header\r\n- `HttpOnly` flag: JavaScript cannot access it (XSS protection for session tokens)\r\n- `Secure` flag: Only sent over HTTPS\r\n- `SameSite` flag: Controls cross-site sending (`Strict`, `Lax`, `None`)\r\n- Expiry: `Max-Age` or `Expires` — without these, it's a session cookie (deleted when browser closes)\r\n\r\n**Use cookies for**: session tokens, authentication, anything the server needs to read.\r\n\r\n"
+    },
+    {
+      "title": "# localStorage",
+      "order": 26,
+      "content": "\r\n```javascript\r\n// Simple key-value storage\r\nlocalStorage.setItem('theme', 'dark');\r\nlocalStorage.setItem('cart', JSON.stringify([{ id: 1, qty: 2 }]));\r\n\r\nconst theme = localStorage.getItem('theme');              // 'dark'\r\nconst cart = JSON.parse(localStorage.getItem('cart'));    // [{ id: 1, qty: 2 }]\r\n\r\nlocalStorage.removeItem('theme');\r\nlocalStorage.clear(); // nuke everything\r\n```\r\n\r\nKey characteristics:\r\n- **Never sent to the server**\r\n- Persists until explicitly cleared (survives browser restarts)\r\n- ~5-10MB storage limit\r\n- Synchronous API — can block the main thread for large operations\r\n- Scoped to origin (protocol + domain + port)\r\n\r\n**Use for**: user preferences, non-sensitive cached data, offline-first apps.\r\n\r\n"
+    },
+    {
+      "title": "# sessionStorage",
+      "order": 27,
+      "content": "\r\nSame API as localStorage, but:\r\n- Cleared when the tab is closed\r\n- Not shared between tabs (even same origin)\r\n- Good for: wizard state, temporary form data, tab-specific UI state\r\n\r\n"
+    },
+    {
+      "title": "# The Real Decision Matrix",
+      "order": 28,
+      "content": "\r\n```\r\nQuestion: Does the server need to read this data?\r\n  YES → Cookie (with HttpOnly if it's a token)\r\n  NO  → Continue...\r\n\r\nQuestion: Should it persist after the browser closes?\r\n  YES → localStorage\r\n  NO  → sessionStorage\r\n```\r\n\r\n**Never store sensitive data** (tokens, passwords, personal info) in localStorage or sessionStorage. XSS attacks can steal everything in there. Session tokens belong in `HttpOnly` cookies.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "CORS (Cross-Origin Resource Sharing)",
+      "order": 29,
+      "content": "\r\nThis trips up every developer eventually. Here's what's actually happening.\r\n\r\n"
+    },
+    {
+      "title": "# The Same-Origin Policy",
+      "order": 30,
+      "content": "\r\nBrowsers enforce a rule: JavaScript on `https://app.example.com` cannot make requests to `https://api.different.com`. Two URLs have the same origin only if protocol, domain, AND port all match.\r\n\r\nThis is a security feature. Without it, a malicious site could make requests to your bank using your session cookies.\r\n\r\n"
+    },
+    {
+      "title": "# When CORS Kicks In",
+      "order": 31,
+      "content": "\r\nCORS is the mechanism for **relaxing** the same-origin policy in a controlled way. The server declares which origins are allowed to make cross-origin requests.\r\n\r\n**Simple requests** (GET/POST with basic headers) work like this:\r\n\r\n```\r\nBrowser → Server:\r\nGET /api/data HTTP/1.1\r\nOrigin: https://app.example.com\r\n\r\nServer → Browser:\r\nHTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: https://app.example.com\r\n[data]\r\n```\r\n\r\n**Preflight requests** — for methods like PUT/DELETE, or requests with custom headers, the browser first sends an `OPTIONS` request:\r\n\r\n```\r\nBrowser → Server (preflight):\r\nOPTIONS /api/users/42 HTTP/1.1\r\nOrigin: https://app.example.com\r\nAccess-Control-Request-Method: DELETE\r\nAccess-Control-Request-Headers: Authorization\r\n\r\nServer → Browser:\r\nHTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: https://app.example.com\r\nAccess-Control-Allow-Methods: GET, POST, PUT, DELETE\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nAccess-Control-Max-Age: 86400\r\n\r\nBrowser → Server (actual request):\r\nDELETE /api/users/42 HTTP/1.1\r\nOrigin: https://app.example.com\r\nAuthorization: Bearer ...\r\n```\r\n\r\n"
+    },
+    {
+      "title": "# Configuring CORS in Node.js/Express",
+      "order": 32,
+      "content": "\r\n```javascript\r\nconst express = require('express');\r\nconst app = express();\r\n\r\n// Option 1: Simple setup with the cors package\r\nconst cors = require('cors');\r\n\r\napp.use(cors({\r\n  origin: ['https://app.example.com', 'https://staging.example.com'],\r\n  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],\r\n  allowedHeaders: ['Content-Type', 'Authorization'],\r\n  credentials: true,    // Allow cookies to be sent\r\n  maxAge: 86400         // Cache preflight for 24h\r\n}));\r\n\r\n// Option 2: Manual middleware (so you understand what's happening)\r\napp.use((req, res, next) => {\r\n  const allowedOrigins = ['https://app.example.com'];\r\n  const origin = req.headers.origin;\r\n\r\n  if (allowedOrigins.includes(origin)) {\r\n    res.setHeader('Access-Control-Allow-Origin', origin);\r\n    res.setHeader('Vary', 'Origin'); // Tell caches this response varies by origin\r\n  }\r\n\r\n  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');\r\n  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');\r\n  res.setHeader('Access-Control-Allow-Credentials', 'true');\r\n  res.setHeader('Access-Control-Max-Age', '86400');\r\n\r\n  // Handle preflight\r\n  if (req.method === 'OPTIONS') {\r\n    return res.sendStatus(204);\r\n  }\r\n\r\n  next();\r\n});\r\n```\r\n\r\n**Never use `Access-Control-Allow-Origin: *` with credentials.** Browsers block it. And be careful with `*` in production generally — it allows any site to make requests to your API.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "Web Security Basics",
+      "order": 33,
+      "content": "\r\n"
+    },
+    {
+      "title": "# HTTPS Everywhere",
+      "order": 34,
+      "content": "\r\nServe everything over HTTPS. Use `Strict-Transport-Security` to prevent protocol downgrade attacks:\r\n\r\n```\r\nStrict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\n```\r\n\r\nThis tells browsers to never try HTTP — always use HTTPS. Once you set this (especially with `preload`), it's very hard to undo, so make sure your whole site is HTTPS-ready first.\r\n\r\n"
+    },
+    {
+      "title": "# Security Headers",
+      "order": 35,
+      "content": "\r\nAdd these to every response:\r\n\r\n```\r\nContent-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{random}';\r\nX-Frame-Options: DENY\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: strict-origin-when-cross-origin\r\nPermissions-Policy: camera=(), microphone=(), geolocation=()\r\n```\r\n\r\nWe'll cover each of these in depth in Module 18. For now, the most important one is **Content-Security-Policy (CSP)** — it tells the browser which sources of content are legitimate, blocking many XSS attacks.\r\n\r\n"
+    },
+    {
+      "title": "# OWASP Top 10 Overview",
+      "order": 36,
+      "content": "\r\nThe [OWASP Top 10](https://owasp.org/www-project-top-ten/) is a list of the most critical security risks. We'll go deep on these in Module 18, but at minimum you should be aware of:\r\n\r\n1. **Injection** (SQL, command, LDAP) — never trust user input\r\n2. **Broken Authentication** — weak session management, no MFA\r\n3. **XSS** — injecting scripts into your pages\r\n4. **Insecure Direct Object References** — `GET /invoices/1337` and you can see anyone's invoice\r\n5. **Security Misconfiguration** — default passwords, unnecessary services, verbose error messages\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "REST vs RPC",
+      "order": 37,
+      "content": "\r\nTwo dominant philosophies for designing APIs.\r\n\r\n"
+    },
+    {
+      "title": "# REST (Representational State Transfer)",
+      "order": 38,
+      "content": "\r\nREST is built around **resources** (nouns). You interact with resources using standard HTTP methods:\r\n\r\n```\r\nGET    /users          → list users\r\nPOST   /users          → create a user\r\nGET    /users/42       → get user 42\r\nPUT    /users/42       → replace user 42\r\nPATCH  /users/42       → partially update user 42\r\nDELETE /users/42       → delete user 42\r\n\r\nGET    /users/42/posts → get posts belonging to user 42\r\n```\r\n\r\nREST is **stateless**: every request contains all information needed to process it. No server-side session state. This makes it easy to scale horizontally.\r\n\r\n"
+    },
+    {
+      "title": "# RPC (Remote Procedure Call)",
+      "order": 39,
+      "content": "\r\nRPC is built around **actions** (verbs). You call procedures on the server:\r\n\r\n```\r\nPOST /api  { \"method\": \"getUser\",    \"params\": { \"id\": 42 } }\r\nPOST /api  { \"method\": \"createUser\", \"params\": { \"name\": \"Alice\" } }\r\nPOST /api  { \"method\": \"deleteUser\", \"params\": { \"id\": 42 } }\r\n```\r\n\r\n**gRPC** is Google's modern RPC framework — strongly typed, uses Protocol Buffers, HTTP/2, excellent for microservice-to-microservice communication.\r\n\r\n**tRPC** is popular in TypeScript ecosystems — end-to-end type safety between your Next.js frontend and Node.js backend without code generation.\r\n\r\n"
+    },
+    {
+      "title": "# Which to Use",
+      "order": 40,
+      "content": "\r\n| Situation | Recommendation |\r\n|-----------|---------------|\r\n| Public API that third parties will use | REST |\r\n| Internal microservices, high performance | gRPC |\r\n| Full-stack TypeScript app | tRPC |\r\n| Complex operations that don't map to CRUD | GraphQL or RPC-style |\r\n\r\nThe \"resource vs action\" distinction matters less than people argue. What matters is consistency. Pick one and be consistent.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "WebSockets Basics",
+      "order": 41,
+      "content": "\r\nHTTP is request/response — the client always initiates. WebSockets give you a persistent, **bidirectional** connection. The server can push data to the client at any time.\r\n\r\n"
+    },
+    {
+      "title": "# How the Handshake Works",
+      "order": 42,
+      "content": "\r\nWebSockets start as an HTTP request and upgrade:\r\n\r\n```\r\nClient → Server:\r\nGET /ws HTTP/1.1\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\nServer → Client:\r\nHTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n```\r\n\r\nAfter this, the connection is open. Both sides can send **frames** at any time.\r\n\r\n"
+    },
+    {
+      "title": "# Simple WebSocket Example",
+      "order": 43,
+      "content": "\r\n```javascript\r\n// Server (Node.js with 'ws' library)\r\nconst { WebSocketServer } = require('ws');\r\nconst wss = new WebSocketServer({ port: 8080 });\r\n\r\nwss.on('connection', (ws, req) => {\r\n  console.log('Client connected from', req.socket.remoteAddress);\r\n\r\n  ws.on('message', (data) => {\r\n    const message = JSON.parse(data);\r\n    console.log('Received:', message);\r\n\r\n    // Echo back with a timestamp\r\n    ws.send(JSON.stringify({\r\n      type: 'echo',\r\n      data: message,\r\n      timestamp: Date.now()\r\n    }));\r\n  });\r\n\r\n  ws.on('close', () => {\r\n    console.log('Client disconnected');\r\n  });\r\n\r\n  ws.on('error', (err) => {\r\n    console.error('WebSocket error:', err);\r\n  });\r\n\r\n  // Send a welcome message\r\n  ws.send(JSON.stringify({ type: 'welcome', message: 'Connected!' }));\r\n});\r\n\r\n// Broadcast to all connected clients\r\nfunction broadcast(data) {\r\n  const message = JSON.stringify(data);\r\n  wss.clients.forEach((client) => {\r\n    if (client.readyState === WebSocket.OPEN) {\r\n      client.send(message);\r\n    }\r\n  });\r\n}\r\n```\r\n\r\n```javascript\r\n// Client (Browser)\r\nconst ws = new WebSocket('wss://yourserver.com/ws');\r\n\r\nws.addEventListener('open', () => {\r\n  console.log('Connected');\r\n  ws.send(JSON.stringify({ type: 'subscribe', channel: 'prices' }));\r\n});\r\n\r\nws.addEventListener('message', (event) => {\r\n  const data = JSON.parse(event.data);\r\n  console.log('Received:', data);\r\n});\r\n\r\nws.addEventListener('close', (event) => {\r\n  console.log('Disconnected:', event.code, event.reason);\r\n  // Reconnect logic goes here\r\n});\r\n\r\nws.addEventListener('error', (err) => {\r\n  console.error('WebSocket error:', err);\r\n});\r\n```\r\n\r\n"
+    },
+    {
+      "title": "# When to Use WebSockets",
+      "order": 44,
+      "content": "\r\n- Real-time features: chat, collaborative editing, live dashboards\r\n- Games\r\n- Live notifications\r\n\r\nFor simpler one-way server-to-client updates (price tickers, feeds), **Server-Sent Events (SSE)** are often a better fit — they work over regular HTTP, automatically reconnect, and are simpler to implement. We cover these in Module 17.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "JSON vs XML",
+      "order": 45,
+      "content": "\r\nBoth are data serialization formats. JSON has largely won for web APIs, but XML still exists in many enterprise and legacy systems.\r\n\r\n"
+    },
+    {
+      "title": "# JSON",
+      "order": 46,
+      "content": "\r\n```json\r\n{\r\n  \"user\": {\r\n    \"id\": 42,\r\n    \"name\": \"Alice Chen\",\r\n    \"email\": \"alice@example.com\",\r\n    \"roles\": [\"admin\", \"editor\"],\r\n    \"address\": {\r\n      \"city\": \"San Francisco\",\r\n      \"country\": \"US\"\r\n    },\r\n    \"active\": true,\r\n    \"balance\": 99.99\r\n  }\r\n}\r\n```\r\n\r\nCompact, readable, maps directly to JavaScript objects. Native `JSON.parse()` and `JSON.stringify()`. The default choice for REST APIs.\r\n\r\n"
+    },
+    {
+      "title": "# XML",
+      "order": 47,
+      "content": "\r\n```xml\r\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<user id=\"42\">\r\n  <name>Alice Chen</name>\r\n  <email>alice@example.com</email>\r\n  <roles>\r\n    <role>admin</role>\r\n    <role>editor</role>\r\n  </roles>\r\n  <address city=\"San Francisco\" country=\"US\"/>\r\n  <active>true</active>\r\n  <balance>99.99</balance>\r\n</user>\r\n```\r\n\r\nMore verbose, but supports attributes, namespaces, schemas (XSD), transformations (XSLT), and has mature tooling. Still common in: SOAP web services, RSS feeds, SVG, Microsoft Office formats, configuration files.\r\n\r\n"
+    },
+    {
+      "title": "# When You'll Encounter XML",
+      "order": 48,
+      "content": "\r\n- Third-party integrations with older enterprise systems\r\n- Payment processor APIs (some still use SOAP)\r\n- RSS/Atom feeds\r\n- Android layout files\r\n- Maven/Spring configuration\r\n\r\nYou'll spend 99% of your time writing JSON. But when XML shows up, don't panic — `DOMParser` in the browser and `xml2js` in Node.js handle it fine.\r\n\r\n---\r\n\r\n"
+    },
+    {
+      "title": "Mini Project: Build an HTTP Inspector",
+      "order": 49,
+      "content": "\r\nThis tiny project ties together everything in this module. It's a Node.js server that logs detailed information about every incoming request.\r\n\r\n```javascript\r\n// http-inspector.js\r\n// Run with: node http-inspector.js\r\n// Then visit http://localhost:3000 or use curl/Postman to test\r\n\r\nconst http = require('http');\r\nconst url = require('url');\r\nconst dns = require('dns').promises;\r\n\r\nconst server = http.createServer(async (req, res) => {\r\n  const parsedUrl = url.parse(req.url, true);\r\n  const clientIP = req.socket.remoteAddress;\r\n\r\n  // Try to reverse DNS lookup the client\r\n  let hostname = 'unknown';\r\n  try {\r\n    const result = await dns.reverse(clientIP);\r\n    hostname = result[0] || 'unknown';\r\n  } catch (e) {\r\n    // Ignore — reverse DNS often fails\r\n  }\r\n\r\n  const requestInfo = {\r\n    timestamp: new Date().toISOString(),\r\n    method: req.method,\r\n    url: req.url,\r\n    pathname: parsedUrl.pathname,\r\n    query: parsedUrl.query,\r\n    httpVersion: req.httpVersion,\r\n    client: {\r\n      ip: clientIP,\r\n      hostname,\r\n    },\r\n    headers: req.headers,\r\n    // Check for proxy headers\r\n    realIP: req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || clientIP,\r\n  };\r\n\r\n  // Read the request body if present\r\n  let body = '';\r\n  req.on('data', chunk => body += chunk);\r\n  req.on('end', () => {\r\n    if (body) {\r\n      try {\r\n        requestInfo.body = JSON.parse(body);\r\n      } catch (e) {\r\n        requestInfo.body = body;\r\n      }\r\n    }\r\n\r\n    // Log to console\r\n    console.log('\\n' + '='.repeat(60));\r\n    console.log(JSON.stringify(requestInfo, null, 2));\r\n\r\n    // Respond with the request info\r\n    res.writeHead(200, {\r\n      'Content-Type': 'application/json',\r\n      'X-Powered-By': 'HTTP Inspector',\r\n      'Access-Control-Allow-Origin': '*',\r\n    });\r\n    res.end(JSON.stringify(requestInfo, null, 2));\r\n  });\r\n});\r\n\r\nserver.listen(3000, () => {\r\n  console.log('HTTP Inspector running on http://localhost:3000');\r\n  console.log('Make requests and watch them get logged!\\n');\r\n  console.log('Try:');\r\n  console.log('  curl http://localhost:3000/api/users?page=2');\r\n  console.log('  curl -X POST -H \"Content-Type: application/json\" -d \\'{\"name\":\"Alice\"}\\' http://localhost:3000/users');\r\n});\r\n```\r\n\r\nTry various requests against it and observe exactly what arrives at the server. This builds intuition that will serve you for years.\r\n\r\n---\r\n\r\n"
+    }
+  ],
+  "id": "internet-web-fundamentals"
+}

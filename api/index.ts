@@ -1,13 +1,15 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
-const prisma = new PrismaClient();
+
+const DATA_DIR = path.join(__dirname, '../data/modules');
 
 app.use(cors({
   origin: [
@@ -24,112 +26,105 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 // ─── GET /api/modules ────────────────────────────────────────────────────────
-// Returns all modules with topic counts (lightweight list for the Modules page)
+// Returns all modules with topic counts from JSON files
 app.get('/api/modules', async (_req: Request, res: Response) => {
   try {
-    const modules = await prisma.module.findMany({
-      orderBy: { order: 'asc' },
-      include: {
-        _count: {
-          select: { topics: true },
-        },
-      },
-    });
+    if (!fs.existsSync(DATA_DIR)) {
+      return res.json([]);
+    }
+    const files = fs.readdirSync(DATA_DIR);
+    const modules = files
+      .filter(f => f.endsWith('.json'))
+      .map(f => {
+        const content = fs.readFileSync(path.join(DATA_DIR, f), 'utf-8');
+        const data = JSON.parse(content);
+        return {
+          id: data.id || f.replace('.json', ''),
+          title: data.title,
+          description: data.description,
+          order: data.order,
+          icon: data.icon || null,
+          topicsCount: data.topics.length,
+        };
+      })
+      .sort((a, b) => a.order - b.order);
 
-    const result = modules.map((mod: any) => ({
-      id: mod.id,
-      title: mod.title,
-      description: mod.description,
-      order: mod.order,
-      icon: mod.icon,
-      topicsCount: mod._count.topics,
-    }));
-
-    res.json(result);
+    res.json(modules);
   } catch (error: any) {
-    console.error('Error fetching modules:', error);
+    console.error('Error fetching modules from JSON:', error);
     res.status(500).json({ 
       error: 'Internal server error', 
-      details: error.message,
-      code: error.code 
+      details: error.message
     });
   }
 });
 
 // ─── GET /api/modules/:moduleId ──────────────────────────────────────────────
-// Returns a single module with all its topics (for the ModuleDetails page).
-// Supports lookup by UUID or by order number (1, 2, 3, …)
+// Returns a single module with all its topics from JSON files
 app.get('/api/modules/:moduleId', async (req: Request<{ moduleId: string }>, res: Response) => {
-  const rawId = req.params.moduleId;
-
   try {
-    const orderNum = parseInt(rawId, 10);
-    const isOrderLookup = !isNaN(orderNum);
+    const moduleId = req.params.moduleId;
+    if (!fs.existsSync(DATA_DIR)) {
+      return res.status(404).json({ error: 'Modules directory not found' });
+    }
+    const files = fs.readdirSync(DATA_DIR);
+    
+    // Try to find by ID or by order (filename)
+    let fileName = files.find(f => f.includes(`module-${moduleId}.json`) || f.includes(`${moduleId}.json`));
+    
+    let data;
+    if (!fileName) {
+      // Fallback: search content for matching order or ID
+      const allMods = files.filter(f => f.endsWith('.json')).map(f => {
+        const content = fs.readFileSync(path.join(DATA_DIR, f), 'utf-8');
+        return JSON.parse(content);
+      });
+      data = allMods.find(m => m.id === moduleId || m.order.toString() === moduleId);
+    } else {
+      const content = fs.readFileSync(path.join(DATA_DIR, fileName), 'utf-8');
+      data = JSON.parse(content);
+    }
 
-    const mod = await prisma.module.findFirst({
-      where: isOrderLookup ? { order: orderNum } : { id: rawId },
-      include: {
-        topics: {
-          orderBy: { order: 'asc' },
-        },
-      },
-    });
-
-    if (!mod) {
+    if (!data) {
       res.status(404).json({ error: 'Module not found' });
       return;
     }
 
-    res.json({
-      id: mod.id,
-      title: mod.title,
-      description: mod.description,
-      order: mod.order,
-      icon: mod.icon,
-      topics: (mod as any).topics.map((topic: any) => ({
-        id: topic.id,
-        title: topic.title,
-        order: topic.order,
-        content: topic.content, // raw Markdown
-      })),
-    });
+    res.json(data);
   } catch (error) {
-    console.error('Error fetching module:', error);
+    console.error('Error fetching module from JSON:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // ─── GET /api/modules/:moduleId/topics/:topicId ──────────────────────────────
-// Returns a single topic by its UUID
+// Returns a single topic from JSON
 app.get('/api/modules/:moduleId/topics/:topicId', async (req: Request<{ moduleId: string, topicId: string }>, res: Response) => {
-  const topicId = req.params.topicId;
+  const { moduleId, topicId } = req.params;
 
   try {
-    const topic = await prisma.topic.findUnique({
-      where: { id: topicId },
-    });
+    const files = fs.readdirSync(DATA_DIR);
+    const fileName = files.find(f => f.includes(`module-${moduleId}.json`) || f.includes(`${moduleId}.json`));
+    
+    if (!fileName) {
+      res.status(404).json({ error: 'Module not found' });
+      return;
+    }
+
+    const content = fs.readFileSync(path.join(DATA_DIR, fileName), 'utf-8');
+    const data = JSON.parse(content);
+    const topic = data.topics.find((t: any) => t.id === topicId || t.order.toString() === topicId);
 
     if (!topic) {
       res.status(404).json({ error: 'Topic not found' });
       return;
     }
 
-    res.json({
-      id: topic.id,
-      title: topic.title,
-      order: topic.order,
-      content: topic.content,
-    });
+    res.json(topic);
   } catch (error) {
-    console.error('Error fetching topic:', error);
+    console.error('Error fetching topic from JSON:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
-});
-
-// ─── Graceful shutdown ───────────────────────────────────────────────────────
-process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
 });
 
 app.listen(port, () => {
