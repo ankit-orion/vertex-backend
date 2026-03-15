@@ -5,81 +5,97 @@
   "description": "An exhaustive guide to the architecture, protocols, and technologies that power the modern digital world.",
   "topics": [
     {
+      "id": "intro",
       "title": "Introduction",
       "order": 1,
       "content": "### The Digital Foundation\n\nThe modern digital world is built on two closely related but distinct concepts: the **Internet** and the **World Wide Web**. While often used interchangeably, they represent different layers of technology:\n\n*   **The Internet**: The global network infrastructure (the hardware, wires, and protocols) that connects computers and devices across the world.\n*   **The World Wide Web**: A service that runs *on top* of the Internet, allowing users to access websites and web pages through browsers.\n\nUnderstanding these fundamentals is essential for anyone in computer science, IT, or web development. This module explores the architecture, protocols, and systems that form the backbone of our digital lives.\n\n---\n"
     },
     {
+      "id": "overview",
       "title": "The Internet: Overview and Definition",
       "order": 2,
       "content": "### What is the Internet?\n\nThe Internet is a massive global network of interconnected computers and devices that communicate using standardized protocols. It allows the exchange of data regardless of geographic location.\n\n#### Key Characteristics\n\n| Characteristic | Description |\n| :--- | :--- |\n| **Global Connectivity** | Devices across continents can communicate almost instantly. |\n| **Decentralized** | No single authority or government controls the entire Internet; it's a \"network of networks.\" |\n| **Standardized Protocols** | Governed by universal rules (like TCP/IP) that ensure different devices can talk to each other. |\n| **Scalability** | Designed to grow infinitely as new devices and networks join. |\n| **Packet-Based** | Information is broken into small chunks (packets) for efficient transmission. |\n\n---\n"
     },
     {
+      "id": "history",
       "title": "History and Evolution",
       "order": 3,
       "content": "### From ARPANET to the Modern Web\n\nThe development of the Internet was a gradual process resulting from decades of research.\n\n#### 1. The ARPANET Era (1960s)\nFunded by the U.S. Department of Defense, ARPANET introduced groundbreaking ideas like **packet switching** and **distributed architecture**, designed to survive partial network failures.\n\n#### 2. Protocol Standardization (1970s - 1980s)\nThe development of **TCP/IP** created a universal language for networking. During this time, universities and research institutions began connecting, and **Email** emerged as the first \"killer app.\"\n\n#### 3. Birth of the Web (1990s)\nIn 1989, **Tim Berners-Lee** proposed a system to share documents using hypertext. This introduced the core pillars of the web:\n*   **HTML**: HyperText Markup Language\n*   **HTTP**: HyperText Transfer Protocol\n*   **Web Browsers**: The interface for humans to navigate.\n\n#### 4. The Modern Internet\nToday, the Internet supports billions of devices, from smartphones to Smart TVs (IoT), powering everything from social media to AI-driven services.\n\n---\n"
     },
     {
+      "id": "www",
       "title": "The World Wide Web (WWW)",
       "order": 4,
       "content": "### The Web Ecosystem\n\nThe World Wide Web is a system of interlinked documents (web pages) accessed via the Internet. It relies on a simple yet powerful interaction between three components:\n\n#### 1. Web Browsers (The Client)\nSoftware like **Chrome, Firefox, or Safari** that renders code into a visual interface. \n*   They send requests to servers.\n*   They interpret HTML, CSS, and JavaScript.\n*   They manage user state (cookies/sessions).\n\n#### 2. Web Servers\nComputer systems that store websites and \"serve\" them to users upon request. Popular server software includes **Nginx** and **Apache**.\n\n#### 3. Web Pages\nDocuments written in HTML that contain text, images, and hyperlinks. A collection of related web pages forms a **Website**.\n\n---\n"
     },
     {
+      "id": "architecture",
       "title": "Internet Architecture: The TCP/IP Model",
       "order": 5,
       "content": "### How Data Travels\n\nThe Internet operates on a layered architecture. The **TCP/IP Model** is the standard, consisting of four layers:\n\n#### 1. Network Access Layer\nHandles physical transmission (WiFi, Ethernet, Fiber Optics) and hardware mapping.\n\n#### 2. Internet Layer\nManages addressing and routing. The primary protocol is **IP (Internet Protocol)**, which ensures packets reach the correct destination.\n\n#### 3. Transport Layer\nEnsures reliable delivery. \n*   **TCP (Transmission Control Protocol)**: Reliable, error-checked, and ordered. Used for Web, Email, and File transfers.\n*   **UDP (User Datagram Protocol)**: Fast, but \"fire-and-forget.\" Used for Video Streaming, Gaming, and VoIP.\n\n#### 4. Application Layer\nThe layer browsers and apps interact with directly. Protocols include **HTTP, FTP, SMTP, and DNS**.\n\n---\n"
     },
     {
+      "id": "ip-addressing",
       "title": "IP Addressing: IPv4 vs IPv6",
       "order": 6,
       "content": "### Every Device Needs an Address\n\nAn IP address is a unique identifier for every device on a network.\n\n#### IPv4 (The Old Standard)\n*   **Format**: `192.168.1.1` (32-bit)\n*   **Limit**: ~4.3 billion addresses (which we have run out of).\n\n#### IPv6 (The Modern Standard)\n*   **Format**: `2001:0db8:85a3:0000:0000:8a2e:0370:7334` (128-bit)\n*   **Limit**: Virtually unlimited ($3.4 \\times 10^{38}$ addresses).\n*   **Benefits**: Built-in security, more efficient routing, and enough addresses for every grain of sand on Earth.\n\n---\n"
     },
     {
+      "id": "dns",
       "title": "Domain Name System (DNS)",
       "order": 7,
       "content": "### The Phonebook of the Internet\n\nComputers talk in numbers (IPs), but humans talk in names (`google.com`). DNS bridged this gap.\n\n#### The Resolution Process:\n1.  **Request**: You type a URL.\n2.  **Query**: Your browser asks a **DNS Resolver**.\n3.  **Hierarchy**: The resolver checks Root, then TLD (`.com`), then Authoritative servers.\n4.  **IP Return**: The server returns the IP address (`142.250.183.14`).\n5.  **Connection**: The browser connects directly to that IP.\n\n**Note**: DNS results are cached locally to make subsequent visits instantaneous.\n\n---\n"
     },
     {
+      "id": "url",
       "title": "Uniform Resource Locator (URL)",
       "order": 8,
       "content": "### Anatomy of a Web Address\n\nA URL is essentially the \"GPS coordinate\" for a resource on the web. \n\n**Example**: `https://www.example.com/blog/post-1`\n\n*   **Protocol** (`https://`): Defines how data is transferred.\n*   **Domain Name** (`www.example.com`): Identifies the server.\n*   **Path** (`/blog/post-1`): Points to the specific file or resource on that server.\n\n---\n"
     },
     {
+      "id": "http-https",
       "title": "HTTP and HTTPS",
       "order": 9,
       "content": "### The Language of the Web\n\n**HTTP (HyperText Transfer Protocol)** is the request-response protocol used for communication.\n\n#### HTTPS: The Secure Standard\nHTTPS is HTTP with **SSL/TLS Encryption** layered underneath. It is no longer optional for modern sites.\n\n**Why HTTPS Matters:**\n1.  **Encryption**: Protects data from \"Man-in-the-Middle\" (MITM) attacks.\n2.  **Authentication**: Verifies that the server is who they say they are.\n3.  **Data Integrity**: Ensures data wasn't tampered with during transit.\n\n*Critical for payments, logins, and any private data.*\n\n---\n"
     },
     {
+      "id": "client-server",
       "title": "Client-Server Architecture",
       "order": 10,
       "content": "### The Foundation of Web Interaction\n\nMost web applications follow the **Client-Server Model**:\n\n*   **The Client**: The requester. Usually your browser or a mobile app.\n*   **The Server**: The provider. It handles the logic, talks to databases, and sends back the requested resource.\n\n#### The Request-Response Cycle\n1.  **Client** sends a Request (e.g., `GET /index.html`).\n2.  **Processor** (Server) receives and processes it.\n3.  **Response** is sent back (e.g., `200 OK` with the HTML content).\n\n---\n"
     },
     {
+      "id": "technologies",
       "title": "Core Web Technologies",
       "order": 11,
       "content": "### The Holy Trinity of Web Development\n\nModern websites are built using three fundamental technologies:\n\n1.  **HTML (Structure)**: Defines the skeleton of the page (headings, paragraphs, sections).\n2.  **CSS (Presentation)**: Controls the visual layer (colors, fonts, layouts, animations).\n3.  **JavaScript (Interactivity)**: Adds dynamic behavior (form validation, interactive maps, live updates).\n\nTogether, these allow for the creation of \"Responsive Design\" — websites that look great on both a 30-inch monitor and a 5-inch smartphone.\n\n---\n"
     },
     {
+      "id": "hosting",
       "title": "Web Hosting Models",
       "order": 12,
       "content": "### Where Websites Live\n\nTo make a website accessible 24/7, it must be hosted on a server. \n\n| Type | Description | Best For |\n| :--- | :--- | :--- |\n| **Shared Hosting** | Multiple sites share one server. | Personal blogs |\n| **VPS Hosting** | Virtual partition of a physical server. | Small businesses |\n| **Dedicated Hosting** | An entire physical server for one site. | High-traffic enterprises |\n| **Cloud Hosting** | Distributed network of virtual servers. | Startups & Scalable apps |\n\n---\n"
     },
     {
+      "id": "security",
       "title": "Web Security Fundamentals",
       "order": 13,
       "content": "### Protecting the Digital Frontier\n\nSecurity is paramount. Understanding threats is the first step to mitigation.\n\n#### Common Threats\n*   **Malware**: Software designed to infect or damage systems.\n*   **Phishing**: Deceptive attempts to steal credentials.\n*   **DDoS**: Overwhelming a server with fake traffic to take it offline.\n\n#### Essential Measures\n*   Implementing **SSL/TLS** (HTTPS).\n*   Setting up **Firewalls** and Intrusion Detection Systems.\n*   Enforcing **Secure Authentication** (MFA/2FA).\n\n---\n"
     },
     {
+      "id": "cookies-sessions",
       "title": "Cookies and Sessions",
       "order": 14,
       "content": "### Maintaining State\n\nHTTP is \"stateless\" — the server forgets you the moment a request is finished. Cookies and sessions fix this.\n\n*   **Cookies**: Small text files stored in **your browser**. Used for tracking preferences or items in a shopping cart.\n*   **Sessions**: Temporary data stored on **the server**. A \"Session ID\" (usually stored in a cookie) connects your browser to your data on the server.\n\n*Example*: Staying logged in while browsing different pages on a site relies on these technologies.\n\n---\n"
     },
     {
+      "id": "search-engines",
       "title": "How Search Engines Work",
       "order": 15,
       "content": "### From Discovery to Ranking\n\nSearch engines like Google use a three-stage process to organize the web's information:\n\n1.  **Crawling**: Automated bots (\"Spiders\") scan the web by following links from page to page.\n2.  **Indexing**: Search engines collect and store the data from crawled pages in a massive database.\n3.  **Ranking**: When you search, algorithms determine which pages are most relevant and display them in order.\n\nOptimization for this process is called **SEO (Search Engine Optimization)**.\n\n---\n"
     },
     {
+      "id": "future",
       "title": "The Future of the Web",
       "order": 16,
       "content": "### What Lies Ahead?\n\nThe Internet continues to evolve at a staggering pace. \n\n**Key Emerging Trends:**\n*   **AI Integration**: Engines and apps driven by Large Language Models.\n*   **Web3**: Decentralized systems and blockchain-based ownership.\n*   **5G & 6G**: Ultra-fast, low-latency mobile connectivity.\n*   **Edge Computing**: Moving processing closer to the user to reduce lag.\n*   **IoT (Internet of Things)**: Connecting everyday objects (fridges, cars) to the global network.\n"
