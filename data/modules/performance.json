@@ -1,0 +1,26 @@
+{
+  "id": "perf",
+  "order": 13,
+  "title": "Performance Optimization",
+  "description": "Make your applications lightning fast on the frontend and backend. Code splitting, lazy loading, caching, database optimization, and CDN strategies.",
+  "topics": [
+    {
+      "id": "code-splitting",
+      "title": "Code Splitting and Lazy Loading",
+      "order": 1,
+      "content": "### Don't Load What You Don't Need Yet\n\n#### Route-Based Code Splitting\n\nThe most impactful optimization: don't load code for `/dashboard` when the user is on `/login`.\n\n```jsx\nimport { lazy, Suspense } from 'react';\n\n// Instead of: import Dashboard from './pages/Dashboard';\n// Use:\nconst Dashboard = lazy(() => import('./pages/Dashboard'));\nconst Settings = lazy(() => import('./pages/Settings'));\nconst Analytics = lazy(() => import('./pages/Analytics'));\n\nfunction App() {\n  return (\n    <Suspense fallback={<PageLoader />}>\n      <Routes>\n        <Route path=\"/dashboard\" element={<Dashboard />} />\n        <Route path=\"/settings\" element={<Settings />} />\n        <Route path=\"/analytics\" element={<Analytics />} />\n      </Routes>\n    </Suspense>\n  );\n}\n```\n\n#### Component-Level Lazy Loading\n\n```jsx\nimport { lazy, Suspense, useState } from 'react';\n\n// Heavy component only loaded when user clicks \"Open Editor\"\nconst CodeEditor = lazy(() => import('./CodeEditor'));\n\nfunction Workspace() {\n  const [showEditor, setShowEditor] = useState(false);\n\n  return (\n    <div>\n      <button onClick={() => setShowEditor(true)}>Open Editor</button>\n      {showEditor && (\n        <Suspense fallback={<div>Loading editor...</div>}>\n          <CodeEditor />\n        </Suspense>\n      )}\n    </div>\n  );\n}\n```\n\n#### Bundle Analysis\n\n```bash\n# Vite: visualize what's in your bundle\nnpm run build -- --mode analyze\n# Or install rollup-plugin-visualizer\n```\n\nLook for: large dependencies you can lazy-load, duplicate packages, unused code.\n\n---\n"
+    },
+    {
+      "id": "images-assets",
+      "title": "Image and Asset Optimization",
+      "order": 2,
+      "content": "### Images Are Usually the Biggest Performance Win\n\n#### Format Selection\n\n| Format | Best for | Compression |\n| :--- | :--- | :--- |\n| **WebP** | Photos, general use | 25-35% smaller than JPEG |\n| **AVIF** | Photos (modern browsers) | 50% smaller than JPEG |\n| **SVG** | Icons, logos, illustrations | Vector — scales perfectly |\n| **PNG** | Images needing transparency | Lossless |\n\n#### Responsive Images\n\n```html\n<!-- Let the browser choose the right size -->\n<img\n  src=\"/hero-800.webp\"\n  srcset=\"\n    /hero-400.webp 400w,\n    /hero-800.webp 800w,\n    /hero-1200.webp 1200w\n  \"\n  sizes=\"(max-width: 600px) 400px, (max-width: 1200px) 800px, 1200px\"\n  alt=\"Hero image\"\n  loading=\"lazy\"\n  decoding=\"async\"\n/>\n```\n\n#### Lazy Loading\n\n```html\n<!-- Native browser lazy loading -->\n<img src=\"product.webp\" loading=\"lazy\" alt=\"Product\" />\n\n<!-- Above-the-fold images should be eager (default) -->\n<img src=\"hero.webp\" loading=\"eager\" fetchpriority=\"high\" alt=\"Hero\" />\n```\n\n---\n"
+    },
+    {
+      "id": "backend-caching",
+      "title": "Backend Caching Patterns",
+      "order": 3,
+      "content": "### Cache at Every Layer\n\n#### HTTP Caching Headers\n\n```js\n// Cache static assets for 1 year (content-hashed filenames)\napp.use('/assets', express.static('public/assets', {\n  maxAge: '1y',\n  immutable: true // Tells browser: never recheck this URL\n}));\n\n// Cache API responses for 5 minutes, allow stale for 30s\napp.get('/api/products', (req, res) => {\n  res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=30');\n  res.json(products);\n});\n\n// Never cache personalised or auth-required responses\napp.get('/api/profile', authenticate, (req, res) => {\n  res.set('Cache-Control', 'private, no-store');\n  res.json(req.user);\n});\n```\n\n#### Database Query Caching\n\n```js\n// Cache expensive aggregation results\nasync function getLeaderboard() {\n  const cacheKey = 'leaderboard:weekly';\n  const cached = await redis.get(cacheKey);\n  if (cached) return JSON.parse(cached);\n\n  // This query might scan millions of rows\n  const results = await db.query(`\n    SELECT user_id, SUM(score) as total\n    FROM submissions\n    WHERE created_at > NOW() - INTERVAL '7 days'\n    GROUP BY user_id\n    ORDER BY total DESC\n    LIMIT 100\n  `);\n\n  // Cache for 10 minutes\n  await redis.setex(cacheKey, 600, JSON.stringify(results));\n  return results;\n}\n```\n\n---\n"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "git",
+  "order": 6,
+  "title": "Git & Version Control",
+  "description": "Track changes and collaborate effectively with Git. Master branching, merging, rebasing, and professional team workflows.",
+  "topics": [
+    {
+      "id": "git-basics",
+      "title": "Git Basics",
+      "order": 1,
+      "content": "### What is Git?\n\nGit is a **distributed version control system**. Every developer has a complete copy of the repository — including its full history — on their local machine. This is different from centralized systems (like SVN) where there's one central server.\n\n#### Core Concepts\n\n| Concept | Description |\n| :--- | :--- |\n| **Repository (repo)** | A directory tracked by Git, containing all project files and history. |\n| **Working tree** | The files you see and edit on disk. |\n| **Staging area (index)** | A preparation zone where you build up a commit. |\n| **Commit** | A permanent snapshot of staged changes, stored with a SHA-1 hash. |\n| **HEAD** | A pointer to the current commit (usually the tip of the current branch). |\n\n#### Essential Commands\n\n```bash\n# Initialize a new repository\ngit init\n\n# Clone an existing repository\ngit clone https://github.com/user/repo.git\n\n# Check the status of your working tree\ngit status\n\n# See what changed (unstaged)\ngit diff\n\n# See what is staged\ngit diff --staged\n\n# View commit history\ngit log --oneline --graph --decorate\n```\n\n---\n"
+    },
+    {
+      "id": "commits",
+      "title": "Commits: Staging and Saving",
+      "order": 2,
+      "content": "### The Three-Stage Workflow\n\nGit's staging area is what separates it from most other VCS tools. It lets you craft precise, logical commits even when your working tree has unrelated changes.\n\n```bash\n# Stage a specific file\ngit add src/api/auth.ts\n\n# Stage parts of a file (interactive patch)\ngit add -p src/api/auth.ts\n\n# Stage all changes in the current directory\ngit add .\n\n# Commit staged changes\ngit commit -m \"feat(auth): add JWT refresh token rotation\"\n\n# Stage and commit tracked files in one step\ngit commit -am \"fix: handle null user in profile route\"\n\n# Amend the most recent commit (before pushing)\ngit commit --amend --no-edit\n```\n\n#### Writing Good Commit Messages\n\nFollow the **Conventional Commits** specification:\n\n```\n<type>(<scope>): <short summary>\n\n[optional body]\n\n[optional footer]\n```\n\nTypes: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`\n\n**Good**: `feat(auth): add OAuth2 Google login`  \n**Bad**: `fixed stuff`, `wip`, `asdfgh`\n\n---\n"
+    },
+    {
+      "id": "branching",
+      "title": "Branching",
+      "order": 3,
+      "content": "### Branches are Cheap\n\nA branch in Git is just a lightweight pointer to a commit. Creating a branch costs nothing — it's a 41-byte file. Use branches liberally.\n\n```bash\n# List all branches\ngit branch -a\n\n# Create a new branch\ngit branch feature/user-auth\n\n# Create and switch in one command\ngit checkout -b feature/user-auth\n# Modern equivalent:\ngit switch -c feature/user-auth\n\n# Switch to an existing branch\ngit switch main\n\n# Delete a branch (after merging)\ngit branch -d feature/user-auth\n\n# Force delete (unmerged changes)\ngit branch -D feature/user-auth\n\n# Push a branch to remote\ngit push -u origin feature/user-auth\n```\n\n#### Branch Naming Conventions\n\n```\nfeature/add-payment-gateway\nbugfix/login-redirect-loop\nhotfix/critical-sql-injection\nrelease/v2.1.0\nchore/upgrade-dependencies\n```\n\n---\n"
+    },
+    {
+      "id": "merging-rebasing",
+      "title": "Merging vs Rebasing",
+      "order": 4,
+      "content": "### Two Ways to Integrate Changes\n\n#### Merge: Preserves History\n\nMerge creates a new \"merge commit\" that joins two branches. The history shows exactly when branches diverged and rejoined.\n\n```bash\ngit switch main\ngit merge feature/user-auth\n\n# Fast-forward merge (if no divergence)\ngit merge --ff-only feature/user-auth\n\n# Always create a merge commit (no fast-forward)\ngit merge --no-ff feature/user-auth\n```\n\n#### Rebase: Linear History\n\nRebase replays your commits on top of another branch. The result is a clean, linear history — but it rewrites commit SHAs.\n\n```bash\n# Rebase feature branch onto main\ngit switch feature/user-auth\ngit rebase main\n\n# Interactive rebase: squash, reorder, edit commits\ngit rebase -i HEAD~3\n```\n\n#### The Golden Rule of Rebasing\n\n> **Never rebase commits that have been pushed to a shared remote branch.**\n\nRebasing rewrites history. If others have based work on those commits, they will have a bad time.\n\n| | Merge | Rebase |\n| :--- | :--- | :--- |\n| **History** | Preserves all branches | Linear, clean |\n| **Safety** | Always safe | Unsafe on shared branches |\n| **Use case** | Integrating finished features | Cleaning up local commits |\n\n---\n"
+    },
+    {
+      "id": "conflict-resolution",
+      "title": "Conflict Resolution",
+      "order": 5,
+      "content": "### When Two Branches Change the Same Lines\n\nA merge conflict occurs when Git can't automatically reconcile two versions of the same file.\n\n```bash\n# After a conflicted merge, Git marks the conflicted files\ngit status\n# Both modified:   src/auth/login.ts\n\n# Open the file — you'll see conflict markers:\n```\n\n```\n<<<<<<< HEAD\nconst timeout = 3600;  // your change\n=======\nconst timeout = 7200;  // their change\n>>>>>>> feature/extend-session\n```\n\n```bash\n# After manually resolving, stage the file\ngit add src/auth/login.ts\n\n# Complete the merge\ngit commit\n\n# Or abort and go back to before the merge\ngit merge --abort\n```\n\n#### Pro Tip: Use a Merge Tool\n\n```bash\n# Use VS Code as the merge tool\ngit config --global merge.tool vscode\ngit config --global mergetool.vscode.cmd 'code --wait $MERGED'\ngit mergetool\n```\n\n---\n"
+    },
+    {
+      "id": "git-workflows",
+      "title": "Git Workflows",
+      "order": 6,
+      "content": "### How Teams Organize Their Branches\n\n#### GitHub Flow (Simple, Recommended)\n\nPerfect for teams deploying continuously:\n\n1. `main` is always deployable.\n2. Create a branch for every feature/fix.\n3. Open a Pull Request when ready.\n4. Merge to `main` after review.\n5. Deploy immediately.\n\n#### Git Flow (Complex, for Scheduled Releases)\n\nUses two permanent branches (`main`, `develop`) and three supporting types (`feature/`, `release/`, `hotfix/`).\n\n#### Trunk-Based Development\n\nEveryone commits to `main` (or `trunk`) multiple times per day. Feature flags hide incomplete work. Requires strong CI.\n\n#### Which to Use?\n\n| Team Size | Release Cadence | Recommended Workflow |\n| :--- | :--- | :--- |\n| 1–5 devs | Continuous | GitHub Flow |\n| 5–20 devs | Scheduled | Git Flow |\n| 20+ devs | Continuous | Trunk-Based |\n\n---\n"
+    },
+    {
+      "id": "semantic-versioning",
+      "title": "Semantic Versioning",
+      "order": 7,
+      "content": "### Version Numbers That Mean Something\n\n**SemVer** format: `MAJOR.MINOR.PATCH`\n\n```\nv2.4.1\n^  ^  ^\n|  |  └── PATCH: backwards-compatible bug fixes\n|  └───── MINOR: new backwards-compatible features\n└──────── MAJOR: breaking changes\n```\n\n#### Examples\n\n```bash\n# Bug fix (no API changes)\nv1.0.0 → v1.0.1\n\n# New feature (old code still works)\nv1.0.1 → v1.1.0\n\n# Breaking change (old code may break)\nv1.1.0 → v2.0.0\n```\n\n#### Pre-release Labels\n\n```\nv2.0.0-alpha.1    # Early testing\nv2.0.0-beta.3     # Feature complete, bug fixes only\nv2.0.0-rc.1       # Release candidate\nv2.0.0            # Stable release\n```\n\n#### Git Tags\n\n```bash\n# Create an annotated tag\ngit tag -a v1.2.0 -m \"Release v1.2.0: add payment module\"\n\n# Push tags to remote\ngit push origin --tags\n\n# List all tags\ngit tag -l\n```\n\n---\n"
+    }
+  ]
+}

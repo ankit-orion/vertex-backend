@@ -1,0 +1,38 @@
+{
+  "id": "db",
+  "order": 9,
+  "title": "Databases",
+  "description": "Store and query data using relational and non-relational databases. Master SQL, indexing, transactions, NoSQL patterns, and data modeling.",
+  "topics": [
+    {
+      "id": "relational-concepts",
+      "title": "Relational Database Concepts",
+      "order": 1,
+      "content": "### Tables, Rows, and Relationships\n\nA **relational database** organises data into **tables** (relations). Each table has:\n- **Columns** (attributes): the fields defined in the schema.\n- **Rows** (tuples): individual records.\n- **Primary Key**: a column (or combination) that uniquely identifies each row.\n- **Foreign Key**: a column that references a primary key in another table, creating a relationship.\n\n```sql\nCREATE TABLE users (\n  id          SERIAL PRIMARY KEY,\n  email       VARCHAR(255) UNIQUE NOT NULL,\n  name        VARCHAR(100) NOT NULL,\n  created_at  TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE TABLE posts (\n  id          SERIAL PRIMARY KEY,\n  title       VARCHAR(255) NOT NULL,\n  body        TEXT,\n  author_id   INT REFERENCES users(id) ON DELETE CASCADE,\n  created_at  TIMESTAMPTZ DEFAULT NOW()\n);\n```\n\n#### Types of Relationships\n\n| Relationship | Example | Implementation |\n| :--- | :--- | :--- |\n| **One-to-Many** | One user → many posts | Foreign key on the \"many\" side |\n| **Many-to-Many** | Users ↔ Roles | Junction table (`user_roles`) |\n| **One-to-One** | User → Profile | Foreign key + UNIQUE constraint |\n\n---\n"
+    },
+    {
+      "id": "sql-queries",
+      "title": "SQL: Queries and Joins",
+      "order": 2,
+      "content": "### Writing Effective Queries\n\n```sql\n-- Basic SELECT\nSELECT id, name, email FROM users WHERE created_at > '2024-01-01';\n\n-- Filtering and ordering\nSELECT * FROM posts\nWHERE author_id = 42 AND title ILIKE '%typescript%'\nORDER BY created_at DESC\nLIMIT 10 OFFSET 20;\n\n-- Aggregations\nSELECT\n  author_id,\n  COUNT(*)           AS post_count,\n  MAX(created_at)    AS last_posted\nFROM posts\nGROUP BY author_id\nHAVING COUNT(*) > 5\nORDER BY post_count DESC;\n```\n\n#### Joins\n\n```sql\n-- INNER JOIN: only matching rows from both tables\nSELECT p.title, u.name AS author\nFROM posts p\nINNER JOIN users u ON p.author_id = u.id;\n\n-- LEFT JOIN: all posts, even those with no matching user\nSELECT p.title, u.name AS author\nFROM posts p\nLEFT JOIN users u ON p.author_id = u.id;\n\n-- Multiple joins\nSELECT p.title, u.name, COUNT(c.id) AS comment_count\nFROM posts p\nJOIN users u ON p.author_id = u.id\nLEFT JOIN comments c ON c.post_id = p.id\nGROUP BY p.id, u.name\nORDER BY comment_count DESC;\n```\n\n---\n"
+    },
+    {
+      "id": "indexing",
+      "title": "Indexing and Query Optimization",
+      "order": 3,
+      "content": "### Why Queries Get Slow\n\nWithout an index, a query does a **full table scan** — reading every row. On a table with 10 million rows, this is catastrophic.\n\nAn index is a separate data structure (usually a B-tree) that maps column values to row locations.\n\n```sql\n-- Slow: full table scan on 10M row table\nSELECT * FROM users WHERE email = 'alice@example.com';\n\n-- Add an index\nCREATE INDEX idx_users_email ON users(email);\n-- Now: index lookup → O(log n) instead of O(n)\n\n-- Composite index: covers queries filtering by both columns\nCREATE INDEX idx_posts_author_created ON posts(author_id, created_at DESC);\n\n-- Unique index (also enforces uniqueness)\nCREATE UNIQUE INDEX idx_users_email_unique ON users(email);\n\n-- Partial index: only indexes rows matching a condition\nCREATE INDEX idx_users_active ON users(created_at) WHERE active = true;\n```\n\n#### EXPLAIN ANALYZE\n\n```sql\nEXPLAIN ANALYZE\nSELECT * FROM posts WHERE author_id = 42 ORDER BY created_at DESC;\n\n-- Look for:\n-- Seq Scan  → no index used (slow on large tables)\n-- Index Scan → index used (fast)\n-- Rows Removed by Filter → index not selective enough\n```\n\n#### When NOT to Index\n- Tables with < 10,000 rows (full scans are fast)\n- Columns with low cardinality (e.g., a boolean column)\n- Columns that are written very frequently (indexes slow writes)\n\n---\n"
+    },
+    {
+      "id": "transactions",
+      "title": "Transactions and ACID",
+      "order": 4,
+      "content": "### Making Multiple Operations Atomic\n\nA **transaction** groups multiple SQL statements so they either all succeed or all fail.\n\n```sql\n-- Transfer $100 from Alice to Bob\nBEGIN;\n\nUPDATE accounts SET balance = balance - 100 WHERE user_id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE user_id = 2;\n\n-- Only commits if BOTH updates succeed\nCOMMIT;\n\n-- Or roll back everything on failure\nROLLBACK;\n```\n\n#### ACID Properties\n\n| Property | Meaning |\n| :--- | :--- |\n| **Atomicity** | All-or-nothing: either every statement commits or none do. |\n| **Consistency** | A transaction takes the DB from one valid state to another. |\n| **Isolation** | Concurrent transactions don't see each other's partial changes. |\n| **Durability** | Committed data survives crashes (written to disk). |\n\n#### Isolation Levels\n\n```sql\n-- Default (Read Committed): sees only committed data\nSET TRANSACTION ISOLATION LEVEL READ COMMITTED;\n\n-- Repeatable Read: sees same data for duration of transaction\nSET TRANSACTION ISOLATION LEVEL REPEATABLE READ;\n\n-- Serializable: strictest — transactions run as if sequential\nSET TRANSACTION ISOLATION LEVEL SERIALIZABLE;\n```\n\n---\n"
+    },
+    {
+      "id": "nosql",
+      "title": "NoSQL: Document Databases",
+      "order": 5,
+      "content": "### When to Break from Tables\n\nNoSQL databases trade relational guarantees for flexibility and horizontal scale. MongoDB is the most popular document database.\n\n#### Documents vs Rows\n\n```js\n// SQL: normalized, split across tables\nusers:   { id: 1, name: 'Alice' }\naddresses: { user_id: 1, street: '123 Main St', city: 'NYC' }\n\n// MongoDB: embedded document — no join needed\n{\n  _id: ObjectId(\"...\"),\n  name: \"Alice\",\n  address: {\n    street: \"123 Main St\",\n    city: \"NYC\"\n  },\n  tags: [\"premium\", \"verified\"]\n}\n```\n\n#### MongoDB CRUD\n\n```js\n// Insert\nawait db.users.insertOne({ name: 'Alice', email: 'alice@example.com' });\n\n// Find\nawait db.users.find({ city: 'NYC' }).sort({ name: 1 }).limit(10).toArray();\n\n// Update\nawait db.users.updateOne(\n  { _id: userId },\n  { $set: { name: 'Alice Smith' }, $push: { tags: 'admin' } }\n);\n\n// Delete\nawait db.users.deleteOne({ _id: userId });\n\n// Aggregation pipeline\nawait db.orders.aggregate([\n  { $match: { status: 'completed' } },\n  { $group: { _id: '$userId', total: { $sum: '$amount' } } },\n  { $sort: { total: -1 } },\n  { $limit: 10 }\n]).toArray();\n```\n\n#### SQL vs NoSQL: When to Choose What\n\n| Scenario | Choose |\n| :--- | :--- |\n| Complex relationships, financial data | SQL (PostgreSQL) |\n| Flexible schema, hierarchical data | MongoDB |\n| Simple key lookups, caching | Redis |\n| Full-text search | Elasticsearch |\n\n---\n"
+    }
+  ]
+}

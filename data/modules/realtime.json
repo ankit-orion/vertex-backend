@@ -1,0 +1,26 @@
+{
+  "id": "realtime",
+  "order": 17,
+  "title": "Real-Time Applications",
+  "description": "Build live, interactive features using WebSockets, Server-Sent Events, and Pub/Sub systems. Chat apps, notifications, and collaborative tools.",
+  "topics": [
+    {
+      "id": "websockets",
+      "title": "WebSockets",
+      "order": 1,
+      "content": "### Persistent, Bidirectional Communication\n\nHTTP is request-response: the client asks, the server answers, connection closes. **WebSockets** open a persistent connection that both sides can send messages over at any time.\n\n```\nHTTP:       Client ──request──► Server ──response──► (connection closed)\nHTTP:       Client ──request──► Server ──response──► (connection closed)\n\nWebSocket:  Client ────────── connection open ────────── Server\n            Client ──message──────────────────────────► Server\n            Client ◄─────────────────────────message─── Server\n            Client ──message──────────────────────────► Server\n            (connection stays open until explicitly closed)\n```\n\n#### Server (Socket.IO)\n\n```js\nimport { Server } from 'socket.io';\nimport { createServer } from 'http';\n\nconst httpServer = createServer(app);\nconst io = new Server(httpServer, {\n  cors: { origin: 'http://localhost:5173' }\n});\n\nio.on('connection', (socket) => {\n  console.log(`User connected: ${socket.id}`);\n\n  // Listen for messages from this client\n  socket.on('chat:message', (data) => {\n    // Broadcast to everyone in the room\n    io.to(data.roomId).emit('chat:message', {\n      id: crypto.randomUUID(),\n      userId: socket.data.userId,\n      text: data.text,\n      timestamp: Date.now()\n    });\n  });\n\n  socket.on('room:join', (roomId) => {\n    socket.join(roomId);\n    socket.to(roomId).emit('room:user-joined', { userId: socket.data.userId });\n  });\n\n  socket.on('disconnect', () => {\n    console.log(`User disconnected: ${socket.id}`);\n  });\n});\n```\n\n#### Client (Socket.IO)\n\n```js\nimport { io } from 'socket.io-client';\n\nconst socket = io('http://localhost:3000');\n\nsocket.on('connect', () => {\n  socket.emit('room:join', 'general');\n});\n\nsocket.on('chat:message', (message) => {\n  appendMessageToUI(message);\n});\n\nfunction sendMessage(text) {\n  socket.emit('chat:message', { roomId: 'general', text });\n}\n```\n\n---\n"
+    },
+    {
+      "id": "sse",
+      "title": "Server-Sent Events (SSE)",
+      "order": 2,
+      "content": "### One-Way Push from Server to Client\n\nSSE is simpler than WebSockets when you only need the server to push updates to the client (not the other way around).\n\n```\nWebSocket: bidirectional (client ↔ server)\nSSE:       server → client only\n```\n\n#### Server\n\n```js\napp.get('/api/notifications/stream', authenticate, (req, res) => {\n  // Set SSE headers\n  res.setHeader('Content-Type', 'text/event-stream');\n  res.setHeader('Cache-Control', 'no-cache');\n  res.setHeader('Connection', 'keep-alive');\n  res.flushHeaders(); // Send headers immediately\n\n  // Send a ping every 30s to keep connection alive\n  const keepAlive = setInterval(() => {\n    res.write(':ping\\n\\n');\n  }, 30000);\n\n  // Subscribe to user-specific events\n  const unsubscribe = pubsub.subscribe(\n    `user:${req.user.id}:notifications`,\n    (notification) => {\n      res.write(`data: ${JSON.stringify(notification)}\\n\\n`);\n    }\n  );\n\n  // Clean up when client disconnects\n  req.on('close', () => {\n    clearInterval(keepAlive);\n    unsubscribe();\n  });\n});\n```\n\n#### Client\n\n```js\nconst eventSource = new EventSource('/api/notifications/stream');\n\neventSource.onmessage = (event) => {\n  const notification = JSON.parse(event.data);\n  showNotification(notification);\n};\n\neventSource.onerror = () => {\n  // Browser auto-reconnects after a delay\n  console.log('Reconnecting...');\n};\n```\n\n#### SSE vs WebSockets: When to Use Which\n\n| | SSE | WebSocket |\n| :--- | :--- | :--- |\n| **Direction** | Server → Client | Bidirectional |\n| **Protocol** | HTTP | Custom (ws://) |\n| **Auto-reconnect** | Built-in | Manual |\n| **Best for** | Notifications, live feeds | Chat, games, collaboration |\n\n---\n"
+    },
+    {
+      "id": "pubsub",
+      "title": "Pub/Sub Systems",
+      "order": 3,
+      "content": "### Scaling Real-Time Across Multiple Servers\n\nWhen you have multiple WebSocket servers, a message sent to server A won't reach users connected to server B. **Pub/Sub** solves this.\n\n```\nUser A (on server 1)  sends message to room \"general\"\nUser B (on server 2)  should receive it\nUser C (on server 2)  should receive it\n\nWithout Pub/Sub: User B and C never get the message.\n\nWith Pub/Sub (Redis):\nServer 1 publishes to Redis channel \"room:general\"\nServer 2 is subscribed to \"room:general\" → delivers to B and C\n```\n\n#### Socket.IO Redis Adapter\n\n```js\nimport { createAdapter } from '@socket.io/redis-adapter';\nimport { createClient } from 'redis';\n\nconst pubClient = createClient({ url: process.env.REDIS_URL });\nconst subClient = pubClient.duplicate();\n\nawait Promise.all([pubClient.connect(), subClient.connect()]);\n\nio.adapter(createAdapter(pubClient, subClient));\n\n// Now io.to('room').emit() works across all servers automatically\n```\n\n---\n"
+    }
+  ]
+}

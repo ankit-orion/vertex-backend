@@ -1,0 +1,32 @@
+{
+  "id": "api",
+  "order": 10,
+  "title": "API Design",
+  "description": "Learn to design robust, intuitive, and scalable APIs. REST principles, versioning, pagination, rate limiting, and documentation.",
+  "topics": [
+    {
+      "id": "rest-principles",
+      "title": "RESTful API Design",
+      "order": 1,
+      "content": "### The Constraints of REST\n\nREST (Representational State Transfer) is an architectural style, not a protocol. A REST API uses HTTP verbs and URLs to represent resources and actions.\n\n#### Resource-Based URLs\n\n```\n# BAD: verb-based (RPC-style)\nGET  /getUser?id=42\nPOST /createPost\nPOST /deleteComment?id=7\n\n# GOOD: noun-based (REST)\nGET    /users/42           → Get user 42\nPOST   /posts              → Create a post\nDELETE /comments/7         → Delete comment 7\nGET    /users/42/posts      → Get all posts by user 42\n```\n\n#### HTTP Verbs and Their Meaning\n\n| Verb | Action | Idempotent? | Body? |\n| :--- | :--- | :--- | :--- |\n| GET | Read | Yes | No |\n| POST | Create | No | Yes |\n| PUT | Full replace | Yes | Yes |\n| PATCH | Partial update | No | Yes |\n| DELETE | Delete | Yes | No |\n\n#### Status Codes\n\n```\n200 OK           → Successful GET, PUT, PATCH\n201 Created      → Successful POST\n204 No Content   → Successful DELETE\n400 Bad Request  → Invalid input\n401 Unauthorized → Not authenticated\n403 Forbidden    → Authenticated but not allowed\n404 Not Found    → Resource doesn't exist\n409 Conflict     → Duplicate resource\n422 Unprocessable → Validation failed\n429 Too Many Requests → Rate limited\n500 Internal Server Error\n```\n\n---\n"
+    },
+    {
+      "id": "versioning-pagination",
+      "title": "Versioning and Pagination",
+      "order": 2,
+      "content": "### Evolving APIs Without Breaking Clients\n\n#### API Versioning\n\n```\n# URL path versioning (most common, most visible)\nGET /api/v1/users\nGET /api/v2/users\n\n# Header versioning (cleaner URLs)\nGET /api/users\nAccept: application/vnd.myapi.v2+json\n\n# Query parameter versioning\nGET /api/users?version=2\n```\n\n**Rule**: Never break existing clients. V1 must keep working when you launch V2.\n\n#### Pagination\n\n```js\n// Offset/Limit (simple but has issues with large offsets)\nGET /api/posts?page=3&limit=20\n\n// Response\n{\n  \"data\": [ ...20 posts... ],\n  \"pagination\": {\n    \"page\": 3,\n    \"limit\": 20,\n    \"total\": 1500,\n    \"totalPages\": 75,\n    \"hasNext\": true,\n    \"hasPrev\": true\n  }\n}\n\n// Cursor pagination (better for large datasets, real-time data)\nGET /api/posts?cursor=eyJpZCI6MTIzfQ&limit=20\n\n// Response\n{\n  \"data\": [ ...20 posts... ],\n  \"nextCursor\": \"eyJpZCI6MTQzfQ\",\n  \"hasMore\": true\n}\n```\n\n**Cursor pagination** is superior for feeds/infinite scroll: no skipped or duplicated items when new data is added.\n\n---\n"
+    },
+    {
+      "id": "rate-limiting",
+      "title": "Rate Limiting and Idempotency",
+      "order": 3,
+      "content": "### Protecting Your API from Abuse\n\n#### Rate Limiting Headers\n\n```\nHTTP/1.1 200 OK\nX-RateLimit-Limit: 100\nX-RateLimit-Remaining: 42\nX-RateLimit-Reset: 1710000000\n\n# When limit exceeded:\nHTTP/1.1 429 Too Many Requests\nRetry-After: 60\n```\n\n#### Idempotency Keys\n\nFor non-idempotent operations (POST), clients can provide an idempotency key to safely retry on network failure.\n\n```\nPOST /api/payments\nIdempotency-Key: 550e8400-e29b-41d4-a716-446655440000\n\n{\n  \"amount\": 9900,\n  \"currency\": \"usd\",\n  \"customerId\": \"cus_abc123\"\n}\n```\n\nThe server stores the key + response. If the same key is submitted again (e.g., after a timeout), it returns the cached response instead of charging twice.\n\n```js\n// Server implementation sketch\nasync function createPayment(req, res) {\n  const idempotencyKey = req.headers['idempotency-key'];\n\n  if (idempotencyKey) {\n    const cached = await cache.get(`idem:${idempotencyKey}`);\n    if (cached) return res.json(cached);\n  }\n\n  const payment = await stripe.charges.create(req.body);\n\n  if (idempotencyKey) {\n    await cache.set(`idem:${idempotencyKey}`, payment, { ttl: 86400 });\n  }\n\n  res.status(201).json(payment);\n}\n```\n\n---\n"
+    },
+    {
+      "id": "graphql",
+      "title": "GraphQL Fundamentals",
+      "order": 4,
+      "content": "### Query Only What You Need\n\nGraphQL replaces multiple REST endpoints with a single `/graphql` endpoint where clients specify exactly what data they want.\n\n```graphql\n# REST problem: over-fetching / under-fetching\nGET /api/users/42          → Returns 30 fields, you needed 3\nGET /api/users/42/posts    → Second request needed\n\n# GraphQL: one request, exactly the fields needed\nquery {\n  user(id: \"42\") {\n    name\n    email\n    posts(limit: 5) {\n      title\n      publishedAt\n    }\n  }\n}\n```\n\n#### Schema Definition\n\n```graphql\ntype User {\n  id: ID!\n  name: String!\n  email: String!\n  posts: [Post!]!\n}\n\ntype Post {\n  id: ID!\n  title: String!\n  body: String\n  author: User!\n  createdAt: String!\n}\n\ntype Query {\n  user(id: ID!): User\n  posts(limit: Int = 10, cursor: String): PostConnection!\n}\n\ntype Mutation {\n  createPost(title: String!, body: String!): Post!\n  deletePost(id: ID!): Boolean!\n}\n```\n\n#### REST vs GraphQL\n\n| | REST | GraphQL |\n| :--- | :--- | :--- |\n| **Endpoints** | Multiple | Single |\n| **Over-fetching** | Common | Eliminated |\n| **Caching** | Simple (HTTP) | Complex |\n| **File uploads** | Easy | Awkward |\n| **Best for** | Public APIs, simple CRUD | Complex UIs, mobile |\n\n---\n"
+    }
+  ]
+}
